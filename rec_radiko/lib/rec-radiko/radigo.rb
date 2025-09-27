@@ -16,7 +16,7 @@ module Radicaster
         end
         start_str = start_time.strftime("%Y%m%d%H%M%S")
         system("rm -f #{output_path(workdir, start_str, station)}")
-        system("env #{env.join(" ")} radigo rec -area=#{area} -id=#{station} -s=#{start_str}", exception: true)
+        system("/usr/bin/env #{env.join(" ")} radigo rec -area=#{area} -id=#{station} -s=#{start_str}", exception: true)
         output_path(workdir, start_str, station)
       end
 
