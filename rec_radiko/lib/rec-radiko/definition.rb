@@ -3,7 +3,7 @@ require "yaml"
 module Radicaster
   module RecRadiko
     class Definition
-      attr_reader :id, :area, :station, :program_schedule
+      attr_reader :id, :area, :station, :program_schedule, :title, :author
 
       def self.parse(s)
         d = YAML.load(s)
@@ -16,6 +16,10 @@ module Radicaster
         rescue KeyError => e
           raise ArgumentError, "requird key `#{e.key}` not found"
         end
+
+        # title and author are optional
+        title = d["title"]
+        author = d["author"]
 
         unless schedule.is_a?(Array)
           parsed_schedule = Schedule.new(ScheduleItem.parse(schedule))
@@ -31,14 +35,16 @@ module Radicaster
           parsed_schedule = Schedule.new(*parsed_items)
         end
 
-        Definition.new(id: id, area: area, station: station, program_schedule: parsed_schedule)
+        Definition.new(id: id, area: area, station: station, program_schedule: parsed_schedule, title: title, author: author)
       end
 
-      def initialize(id:, area:, station:, program_schedule:)
+      def initialize(id:, area:, station:, program_schedule:, title: nil, author: nil)
         @id = id
         @area = area
         @station = station
         @program_schedule = program_schedule
+        @title = title
+        @author = author
       end
 
       def ==(other)
