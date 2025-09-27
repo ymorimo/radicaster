@@ -4,11 +4,12 @@ source "https://rubygems.org"
 
 git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
-ruby "~> 2.7.0"
+ruby ">= 2.7.0"
 
 gem "aws-sdk-s3"
 gem "aws-sdk-eventbridge"
 gem "aws-sdk-lambda"
+gem "rexml"  # Required for XML parsing in Ruby 3.0+
 
 group :development, :test do
   gem "rspec", "~> 3.0"
