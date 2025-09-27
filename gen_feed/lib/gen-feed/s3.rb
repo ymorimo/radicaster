@@ -25,7 +25,7 @@ module Radicaster
         )
       end
 
-      def list_episodes(id)
+      def list_episodes(id, definition = nil)
         prefix = id + "/"
         resp = client.list_objects_v2(bucket: bucket, prefix: prefix)
         resp
@@ -36,6 +36,7 @@ module Radicaster
             url: build_public_url(c.key),
             size: c.size,
             last_modified: c.last_modified,
+            definition: definition,
           )
         }
           .sort_by(&:title)

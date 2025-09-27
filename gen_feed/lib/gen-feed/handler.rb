@@ -46,7 +46,7 @@ module Radicaster
       def exec(cmd)
         logger.debug("Start exec. id: #{cmd}")
         definition = storage.find_definition(cmd.id)
-        episodes = storage.list_episodes(cmd.id)
+        episodes = storage.list_episodes(cmd.id, definition)
         feed = generator.generate(definition, episodes)
         storage.save_feed(cmd.id, feed)
       end
