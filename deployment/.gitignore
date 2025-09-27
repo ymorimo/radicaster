@@ -5,3 +5,6 @@ node_modules
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# CDK temporary files
+deployment/assets/basic_auth_temp/

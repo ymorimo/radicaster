@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
-import * as cdk from '@aws-cdk/core';
+import { App } from 'aws-cdk-lib';
 import { RadicasterStack } from '../lib/radicaster-stack';
 
 const suffix = process.env.RADICASTER_CDK_SUFFIX || '';
 
-const app = new cdk.App();
+const app = new App();
 new RadicasterStack(app, `RadicasterStack${suffix}`, {
 
   /* If you don't specify 'env', this stack will be environment-agnostic.

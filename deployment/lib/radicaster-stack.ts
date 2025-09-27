@@ -1,13 +1,13 @@
-import { Certificate } from '@aws-cdk/aws-certificatemanager';
-import { CachePolicy, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, ViewerProtocolPolicy } from '@aws-cdk/aws-cloudfront';
-import { S3Origin } from '@aws-cdk/aws-cloudfront-origins';
-import { CanonicalUserPrincipal, Effect, PolicyStatement, ServicePrincipal } from '@aws-cdk/aws-iam';
-import { Code, DockerImageCode, DockerImageFunction, Runtime } from '@aws-cdk/aws-lambda';
-import { S3EventSource } from '@aws-cdk/aws-lambda-event-sources';
-import { Bucket, EventType } from '@aws-cdk/aws-s3';
-import * as cdk from '@aws-cdk/core';
-import { CfnOutput, Duration } from '@aws-cdk/core';
-import { readFileSync } from 'fs';
+import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
+import { CachePolicy, Distribution, experimental, LambdaEdgeEventType, OriginAccessIdentity, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
+import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
+import { CanonicalUserPrincipal, Effect, PolicyStatement, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { Code, DockerImageCode, DockerImageFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
+import { Stack, StackProps, CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import * as path from 'path';
 
 interface Params {
@@ -21,8 +21,8 @@ interface Params {
   radikoPassword?: string;
 }
 
-export class RadicasterStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+export class RadicasterStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     const params: Params = {
@@ -121,15 +121,25 @@ export class RadicasterStack extends cdk.Stack {
   }
 
   private setUpCloudFront(bucket: Bucket, params: Params) {
-    const code = readFileSync(path.join(__dirname, '../assets/basic_auth/function.js'))
-      .toString()
+    // Create a temporary file with replaced values
+    const templateCode = readFileSync(path.join(__dirname, '../assets/basic_auth/function.js')).toString();
+    const code = templateCode
       .replace(/__BASIC_AUTH_USER__/, params.basicAuthUser)
       .replace(/__BASIC_AUTH_PASSWORD__/, params.basicAuthPassword);
+
+    // Write to a temporary file
+    const tempDir = path.join(__dirname, '../assets/basic_auth_temp');
+    if (!existsSync(tempDir)) {
+      mkdirSync(tempDir, { recursive: true });
+    }
+    const tempFile = path.join(tempDir, 'index.js');
+    writeFileSync(tempFile, code);
+
     const fn = new experimental.EdgeFunction(this, 'basic-auth-func', {
-      code: Code.fromInline(code),
+      code: Code.fromAsset(tempDir),
       handler: "index.handler",
-      // NOTE: Node 14.x does not support inline code
-      runtime: Runtime.NODEJS_12_X,
+      // Updated to Node.js 18.x (supported runtime for Lambda@Edge)
+      runtime: Runtime.NODEJS_18_X,
       functionName: `radicaster-basic-auth${params.suffix}`,
       memorySize: 128,
     });

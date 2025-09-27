@@ -22,7 +22,7 @@ exports.handler = (event, context, callback) => {
 
     const authUser = '__BASIC_AUTH_USER__';
     const authPassword = '__BASIC_AUTH_PASSWORD__';
-    const authString = `Basic ${new Buffer.from(authUser + ':' + authPassword).toString('base64')}`;
+    const authString = `Basic ${Buffer.from(authUser + ':' + authPassword).toString('base64')}`;
 
     if (headers.authorization[0].value === authString) {
         console.log('Authorization succeeded.');
