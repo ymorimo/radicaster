@@ -1,4 +1,5 @@
 require "date"
+require "time"
 
 require "aws-sdk-s3"
 
@@ -24,7 +25,19 @@ module Radicaster
         logger.debug(event)
         validate(event)
         cmd = build_command(event)
-        exec(cmd)
+
+        # Parse time from event if provided
+        time = nil
+        if event["time"]
+          begin
+            time = Time.parse(event["time"])
+            logger.info("Using provided time: #{time}")
+          rescue => e
+            logger.warn("Failed to parse time from event: #{e.message}, using current time")
+          end
+        end
+
+        exec(cmd, time)
       end
 
       private
@@ -42,12 +55,14 @@ module Radicaster
         )
       end
 
-      def exec(cmd)
+      def exec(cmd, time = nil)
         def_ = storage.find_definition(cmd.id)
         logger.info("Definition #{cmd.id} found")
 
-        logger.info("Starting recording")
-        episode = recorder.rec(def_, Time.now)
+        # Use provided time or current time
+        recording_time = time || Time.now
+        logger.info("Starting recording for time: #{recording_time}")
+        episode = recorder.rec(def_, recording_time)
         logger.info("Recording finished")
 
         logger.info("Saving the episode to storage")
