@@ -1,9 +1,14 @@
 require "tempfile"
 require "time"
+require "logger"
 
 module Radicaster
   module RecRadiko
     class Ffmpeg
+      def initialize(logger = nil)
+        @logger = logger || Logger.new(STDOUT)
+      end
+
       def concat(aac_paths, def_ = nil)
         # NOTE:
         # ffmpegでファイルを連結するには元ファイルのリストを書いたテキストを
@@ -41,9 +46,14 @@ module Radicaster
         cmd_parts << "-c copy #{m4a_path}"
         cmd = cmd_parts.join(" ")
 
+        @logger.info("Executing command: #{cmd}")
         system(cmd, exception: true)
         m4a_path
       end
+
+      private
+
+      attr_reader :logger
     end
   end
 end

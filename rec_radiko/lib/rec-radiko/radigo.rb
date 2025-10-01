@@ -1,8 +1,11 @@
+require "logger"
+
 module Radicaster
   module RecRadiko
     class Radigo
-      def initialize(workdir, email = nil, password = nil)
+      def initialize(workdir, email = nil, password = nil, logger = nil)
         @workdir = workdir
+        @logger = logger || Logger.new(STDOUT)
 
         raise "email and password must be passed in together" if email.nil? ^ password.nil?
         @email = email
@@ -15,8 +18,15 @@ module Radicaster
           env.push("RADIKO_MAIL=#{email}", "RADIKO_PASSWORD=#{password}")
         end
         start_str = start_time.strftime("%Y%m%d%H%M%S")
-        system("rm -f #{output_path(workdir, start_str, station)}")
-        system("/usr/bin/env #{env.join(" ")} radigo rec -area=#{area} -id=#{station} -s=#{start_str}", exception: true)
+
+        rm_cmd = "rm -f #{output_path(workdir, start_str, station)}"
+        @logger.info("Executing command: #{rm_cmd}")
+        system(rm_cmd)
+
+        radigo_cmd = "/usr/bin/env #{env.join(" ")} radigo rec -area=#{area} -id=#{station} -s=#{start_str}"
+        @logger.info("Executing command: #{radigo_cmd}")
+        system(radigo_cmd, exception: true)
+
         output_path(workdir, start_str, station)
       end
 
@@ -26,7 +36,7 @@ module Radicaster
         "#{workdir}/#{start}-#{station}.aac"
       end
 
-      attr_reader :workdir, :email, :password
+      attr_reader :workdir, :email, :password, :logger
     end
   end
 end
