@@ -34,9 +34,6 @@ module Radicaster
           puts "Registering recording schedule..."
           scheduler.register(def_)
 
-          puts "Recording latest episode..."
-          recorder.record_latest(def_)
-
           puts "Done!"
         end
       end
