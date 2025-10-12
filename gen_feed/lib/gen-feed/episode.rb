@@ -14,7 +14,7 @@ module Radicaster
         filename = url.split("/")[-1]
 
         # Extract date from filename (assuming format like "20250925.m4a")
-        if match = filename.match(/(\d{4})(\d{2})(\d{2})\./)
+        if match = filename.match(/\b(\d{4})(\d{2})(\d{2})\b/)
           date_str = "#{match[1]}-#{match[2]}-#{match[3]}"
 
           # If definition has a title, use it with the date
