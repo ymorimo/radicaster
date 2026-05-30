@@ -1,6 +1,7 @@
 require "time"
 require "json"
 require "aws-sdk-lambda"
+require "net/http"
 
 module Radicaster
   class RecordCLI
@@ -45,10 +46,35 @@ module Radicaster
       # Extract function name from ARN
       function_name = lambda_arn.split(":").last
 
-      # Create Lambda client
-      lambda_client = Aws::Lambda::Client.new(
+      # Create Lambda client with SSL configuration
+      lambda_config = {
         region: ENV["AWS_REGION"] || "ap-northeast-1"
-      )
+      }
+
+      # Try to use system CA bundle if available (for macOS/Linux)
+      ca_bundle_paths = [
+        "/etc/ssl/certs/ca-certificates.crt",  # Debian/Ubuntu/Gentoo etc.
+        "/etc/ssl/certs/ca-bundle.crt",         # Fedora/RHEL 6
+        "/etc/ssl/ca-bundle.pem",               # OpenSUSE
+        "/etc/pki/tls/certs/ca-bundle.crt",    # Fedora/RHEL 7
+        "/etc/ssl/cert.pem",                    # macOS/OS X
+        "/usr/local/etc/openssl/cert.pem",     # Homebrew OpenSSL on macOS
+        "/usr/local/etc/openssl@1.1/cert.pem"  # Homebrew OpenSSL 1.1 on macOS
+      ]
+
+      ca_bundle_path = ca_bundle_paths.find { |path| File.exist?(path) }
+      if ca_bundle_path && ENV["RADICASTER_USE_SYSTEM_CA"] != "false"
+        lambda_config[:ssl_ca_bundle] = ca_bundle_path
+      end
+
+      # If SSL issues persist, you can temporarily disable peer verification
+      # WARNING: This reduces security and should only be used for development
+      if ENV["RADICASTER_SKIP_SSL_VERIFY"] == "true"
+        puts "WARNING: SSL verification disabled. This is insecure!"
+        lambda_config[:ssl_verify_peer] = false
+      end
+
+      lambda_client = Aws::Lambda::Client.new(lambda_config)
 
       # Create event payload
       # The handler expects an event with "id" and optionally "time"
